@@ -1,4 +1,0 @@
-cd to py version
-place main file in python dir
-
-python "C:\Users\Connor\Documents\CF1\Python\Projects\Completed\Broken Bonez\setup.py" build
