@@ -11,9 +11,9 @@ Broken Bonez is one of the more highlighted video games in the cartoon Regular S
 
 
 
----TO BUILD EXE---
-0. pip install pyinstaller
-1. cd to working dir
-2. pyinstaller "Broken Bonez.pyw"
-3. Put assets folder with exe
-4. Delete build folder
+---TO BUILD EXE---     
+1. pip install pyinstaller
+2. cd to working dir
+3. pyinstaller "Broken Bonez.pyw"
+4. Put assets folder with exe
+5. Delete build folder
