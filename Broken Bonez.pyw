@@ -6,7 +6,7 @@ import os
 import time
 from datetime import datetime
 
-# Version 1.1.0
+# Version 1.2.0
     # make the points accumulate with time
     # subclass tricks/crashes as animations
     # refresh achs/leaderboard
@@ -25,6 +25,7 @@ from datetime import datetime
 # display rank at gameover if highscore
 # cheats - Enter code to unlock new;Background, soundtrack, effects, secret trick, audio quotes form characters, etc.
 # rigby achievement: special secret trick for tapping two buttons back and forth
+# fix no hud after main menu mid game
 
 white = (255,255,255)
 black = (0)
@@ -116,6 +117,7 @@ class Game:
 
 
     def play(self, lives, score=0, timeLeft=60):
+        self.blit_bg = self.bg
         # frame counting for animation
         self.framecount = 0
         self.animations = []
