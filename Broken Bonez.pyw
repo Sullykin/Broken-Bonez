@@ -16,10 +16,14 @@ from datetime import datetime
 # display rank at gameover if highscore
 # cheats - Enter code to unlock new;Background, soundtrack, effects, secret trick, audio quotes form characters, etc.
 # rigby achievement: special secret trick for tapping two buttons back and forth
-# fix no hud after main menu mid game
+# use button mashing to accumulate points directly; have tricks assocaited with points ranges
+    # or have them mash a button aas much as they can while the animation is playing
 
 # Version 1.2.3
-    # limit highscore entries to 5 instead of 10
+    # limited highscore entries to 5 instead of 10
+    # entries at the bottom are replaced if the leaderboard is full
+    # fixed player enters jump phase outside of main loop
+    # fixed no HUD for first trick when replaying
     
 white = (255,255,255)
 black = (0)
@@ -56,6 +60,8 @@ class Game:
 
 
     def mainMenu(self):
+        try: play_sound('Assets/Sounds/score_add.wav', True)
+        except: pass
         self.framecount = 0
         # mouse
         pygame.mouse.set_visible(True)
@@ -86,7 +92,6 @@ class Game:
                     button.update(event)
                     
             # call updates on all objects
-            self.player.update()
             for line in self.windlines:
                 line.update()
             for pebble in self.pebbles:
@@ -279,7 +284,7 @@ class Game:
         for x in range(10):
             self.pebbles.append(Pebble())
         buttons = [Button((1920//2-(418//2))-300, 1080//2+250, 'MAIN MENU'), Button((1920//2-(418//2))+300, 1080//2+250, 'QUIT')]
-        if all(i <= self.score for i in highscores) or len(self.entries) < 10: buttons.append(Button(1920//2-(418//2), 1080//2+100, 'SUBMIT'))
+        if any(i < self.score for i in highscores) or len(self.entries) < 5: buttons.append(Button(1920//2-(418//2), 1080//2+100, 'SUBMIT'))
 
         while True:
             self.framecount += 1
@@ -288,7 +293,7 @@ class Game:
                 checkForQuit(event, pressed_keys)
                 if event.type == pygame.KEYDOWN:
                     # initials input
-                    if all(i <= self.score for i in highscores) or len(self.entries) < 5:
+                    if any(i < self.score for i in highscores) or len(self.entries) < 5:
                         blanks_num = self.blanks.count('_')
                         if event.key == pygame.K_LEFT or event.key == pygame.K_BACKSPACE:
                             self.blanks = ['_','_','_']
@@ -303,7 +308,6 @@ class Game:
                     button.update(event)
 
             # call updates on all objects
-            self.player.update()
             for line in self.windlines:
                 line.update()
             for pebble in self.pebbles:
@@ -316,7 +320,15 @@ class Game:
             drawText(str(self.score), 50, 350, 125)
             drawText('HI-SCORE', 50, 950, 50)
             drawText(str(highscores[0]), 50, 950, 125)
-            if all(i <= self.score for i in highscores) or len(self.entries) < 5:
+            if any(i < self.score for i in highscores) or len(self.entries) < 5:
+                if len(self.entries) == 5:
+                    with open('Assets/Misc/highscores.txt', 'r') as f:
+                        lines = f.readlines()
+                        lines = lines[:-1]
+                    with open('Assets/Misc/highscores.txt', 'w') as f:
+                        for line in lines:
+                            f.write(line)
+                    self.highscore, self.entries = getScores()
                 drawText('NEW HI-SCORE!', 150, 1920//2, 1080//2-260, black)
                 i = -125
                 for blank in self.blanks:
@@ -844,10 +856,10 @@ def getScores():
     entries = [x for y, x in temp]
     entries.reverse()
     highscores.sort()
-    try:
-        highScore = highscores[-1]
-    except:
+    if len(highscores) == 0:
+        highscores = [0]
         highScore = 0
+    else: highScore = highscores[-1]
     return highScore, entries
 
 
