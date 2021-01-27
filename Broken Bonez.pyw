@@ -6,15 +6,6 @@ import os
 import time
 from datetime import datetime
 
-# Version 1.2.0
-    # make the points accumulate with time
-    # subclass tricks/crashes as animations
-    # refresh achs/leaderboard
-    # submit initials button
-    # add main menu button in settings if not from main menu
-    # esc returns to current scene
-    # fix score sound not stopping at game over scene
-    # wait a few seconds before stopping score animation
 # make tricks into mash a letter & hold an arrow key
 # fork a branch for different points system (chicken)
     # mash a button to build up points in the air
@@ -27,6 +18,9 @@ from datetime import datetime
 # rigby achievement: special secret trick for tapping two buttons back and forth
 # fix no hud after main menu mid game
 
+# Version 1.2.3
+    # limit highscore entries to 5 instead of 10
+    
 white = (255,255,255)
 black = (0)
 date = datetime.date(datetime.now())
@@ -294,7 +288,7 @@ class Game:
                 checkForQuit(event, pressed_keys)
                 if event.type == pygame.KEYDOWN:
                     # initials input
-                    if all(i <= self.score for i in highscores) or len(self.entries) < 10:
+                    if all(i <= self.score for i in highscores) or len(self.entries) < 5:
                         blanks_num = self.blanks.count('_')
                         if event.key == pygame.K_LEFT or event.key == pygame.K_BACKSPACE:
                             self.blanks = ['_','_','_']
@@ -322,7 +316,7 @@ class Game:
             drawText(str(self.score), 50, 350, 125)
             drawText('HI-SCORE', 50, 950, 50)
             drawText(str(highscores[0]), 50, 950, 125)
-            if all(i <= self.score for i in highscores) or len(self.entries) < 10:
+            if all(i <= self.score for i in highscores) or len(self.entries) < 5:
                 drawText('NEW HI-SCORE!', 150, 1920//2, 1080//2-260, black)
                 i = -125
                 for blank in self.blanks:
