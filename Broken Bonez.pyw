@@ -10,20 +10,28 @@ from datetime import datetime
 # fork a branch for different points system (chicken)
     # mash a button to build up points in the air
     # risk grows as time passes
-# branch for diff main menus
-# branch for reqs being randomly positioned instead of random every time
+# 1branch for diff main menus
 # branch for getting a couple thousand points per trick to be more realistic
 # display rank at gameover if highscore
 # cheats - Enter code to unlock new;Background, soundtrack, effects, secret trick, audio quotes form characters, etc.
 # rigby achievement: special secret trick for tapping two buttons back and forth
 # use button mashing to accumulate points directly; have tricks assocaited with points ranges
     # or have them mash a button aas much as they can while the animation is playing
+    # use left and right arrow keys ?
 
-# Version 1.2.3
+# Version 1.2.1
     # limited highscore entries to 5 instead of 10
     # entries at the bottom are replaced if the leaderboard is full
-    # fixed player enters jump phase outside of main loop
-    # fixed no HUD for first trick when replaying
+    # fixed player entering jump phase outside of main loop
+    # fixed no HUD before first jump when replaying
+    # New achievement
+    # New extras
+# 'partytime'
+# 'duckpower'
+# 'rig juice'
+# make drawtext for unlocks
+# leaderboard not maxed bug
+# score no wait time afterwards if animation reactivated
     
 white = (255,255,255)
 black = (0)
@@ -636,6 +644,57 @@ class Score:
             drawText(str(self.score), 75+(self.tricks*2), game.player.x+300, game.player.y-50, (self.r,255-self.r,0))
 
 
+class Obstacle(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.x = 2500
+        self.y = 735
+        self.image = get_image('Assets/Images/obstacle.png')
+        self.rect = self.image.get_rect()
+        self.rect.y = self.y
+
+    def update(self):
+        self.x -= 25
+        self.rect.x = self.x
+        if self.x < -800:
+            self.x = 10000
+
+    def draw(self):
+        game.screen.blit(self.image, (self.x, self.y))
+
+
+class Wind:
+    def __init__(self):
+        self.x = random.randint(1920, 4000)
+        self.y = random.randint(300, 1070)
+
+    def update(self):
+        if self.x < -100:
+            self.x = random.randint(1920, 4000)
+            self.y = random.randint(300, 1070)
+        self.x -= 50
+        # add slight y variation
+        self.y += random.randint(-1,1)
+
+    def draw(self):
+        pygame.draw.rect(game.screen, (155, 155, 155), (self.x,self.y,150,1))
+
+
+class Pebble:
+    def __init__(self):
+        self.x = random.randint(0, 4000)
+        self.y = random.randint(950, 1080)
+
+    def update(self):
+        if self.x < -100:
+            self.x = random.randint(1920, 4000)
+            self.y = random.randint(950, 1080)
+        self.x -= 25
+
+    def draw(self):
+        pygame.draw.rect(game.screen, black, (self.x,self.y,5,5))
+
+
 class Button(pygame.sprite.Sprite):
     def __init__(self, x, y, text):
         pygame.sprite.Sprite.__init__(self)
@@ -686,57 +745,6 @@ class Button(pygame.sprite.Sprite):
             game.screen.blit(get_image("Assets/Images/limeborder.png"), (self.x-3, self.y-3))
         game.screen.blit(self.image, self.rect)
         drawText(self.text, self.size, self.x+200, self.y+55, black)
-
-
-class Obstacle(pygame.sprite.Sprite):
-    def __init__(self):
-        pygame.sprite.Sprite.__init__(self)
-        self.x = 2500
-        self.y = 735
-        self.image = get_image('Assets/Images/obstacle.png')
-        self.rect = self.image.get_rect()
-        self.rect.y = self.y
-
-    def update(self):
-        self.x -= 25
-        self.rect.x = self.x
-        if self.x < -800:
-            self.x = 10000
-
-    def draw(self):
-        game.screen.blit(self.image, (self.x, self.y))
-
-
-class Wind:
-    def __init__(self):
-        self.x = random.randint(1920, 4000)
-        self.y = random.randint(300, 1070)
-
-    def update(self):
-        if self.x < -100:
-            self.x = random.randint(1920, 4000)
-            self.y = random.randint(300, 1070)
-        self.x -= 50
-        # add slight y variation
-        self.y += random.randint(-1,1)
-
-    def draw(self):
-        pygame.draw.rect(game.screen, (155, 155, 155), (self.x,self.y,150,1))
-
-
-class Pebble:
-    def __init__(self):
-        self.x = random.randint(0, 4000)
-        self.y = random.randint(950, 1080)
-
-    def update(self):
-        if self.x < -100:
-            self.x = random.randint(1920, 4000)
-            self.y = random.randint(950, 1080)
-        self.x -= 25
-
-    def draw(self):
-        pygame.draw.rect(game.screen, black, (self.x,self.y,5,5))
 
 
 class Option:
