@@ -26,12 +26,12 @@ from datetime import datetime
     # fixed no HUD before first jump when replaying
     # New achievement
     # New extras
+    # score no wait time afterwards if animation reactivated
 # 'partytime'
 # 'duckpower'
 # 'rig juice'
 # make drawtext for unlocks
-# leaderboard not maxed bug
-# score no wait time afterwards if animation reactivated
+
     
 white = (255,255,255)
 black = (0)
@@ -617,6 +617,7 @@ class Score:
             if self.score == self.max:
                 play_sound('Assets/Sounds/score_add.wav', False)
             self.max += trickScore
+            self.capped = False
             self.tricks += 1
         # Add to score until score reaches the current points
         if self.score < self.max:
