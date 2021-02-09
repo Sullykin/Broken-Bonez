@@ -18,12 +18,20 @@ from datetime import datetime
 # rigby achievement: special secret trick for tapping two buttons back and forth
 # use button mashing to accumulate points directly; have tricks assocaited with points ranges
     # or have them mash a button aas much as they can while the animation is playing
+# separate classes from main 
 
 # Version 1.2.3
     # limited highscore entries to 5 instead of 10
     # entries at the bottom are replaced if the leaderboard is full
     # fixed player enters jump phase outside of main loop
     # fixed no HUD for first trick when replaying
+
+# points mashup branch
+    # use arrow keys
+    # accumulate with each press
+    # increment multiplier at x presses
+    # activate trick ani at multiplier interval
+
     
 white = (255,255,255)
 black = (0)
@@ -133,7 +141,6 @@ class Game:
         for x in range(10):
             self.pebbles.append(Pebble())
         # trick flags & vars
-        trick_key = random.choice(string.ascii_uppercase)
         req = random.choice([3,5,7])
         multiplierFlag = False
         multiplier = 1
