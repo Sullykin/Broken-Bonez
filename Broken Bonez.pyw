@@ -2,9 +2,10 @@ import pygame
 import string
 import random
 import sys
-import os
-import time
 from datetime import datetime
+
+import sprites
+import utils
 
 # make tricks into mash a letter & hold an arrow key
 # fork a branch for different points system (chicken)
@@ -18,57 +19,51 @@ from datetime import datetime
 # use button mashing to accumulate points directly; have tricks assocaited with points ranges
     # or have them mash a button aas much as they can while the animation is playing
     # use left and right arrow keys ?
-
-# Version 1.2.1
-    # limited highscore entries to 5 instead of 10
-    # entries at the bottom are replaced if the leaderboard is full
-    # fixed player entering jump phase outside of main loop
-    # fixed no HUD before first jump when replaying
-    # New achievement
-    # New extras
-    # score no wait time afterwards if animation reactivated
 # 'partytime'
 # 'duckpower'
 # 'rig juice'
-# make drawtext for unlocks
 
-    
+# Version 1.5.0 changelog:
+    # make drawtext for cheat unlocks
+
 white = (255,255,255)
 black = (0)
 date = datetime.date(datetime.now())
 
 class Game:
     def __init__(self):
-        # Initialize pygame
-        pygame.mixer.pre_init(44100, -16, 1, 512) # reduces audio latency
-        pygame.init()
-        pygame.mixer.music.load('Assets/Sounds/bgMusic.mp3')
-        pygame.mixer.music.play(-1) # loop music
         # Fetch settings
         with open('Assets/Misc/settings.txt','r') as f:
             savedSettings = f.readlines()
         self.windowMode = savedSettings[0]
-        if self.windowMode == 'RESIZABLE\n':
-            self.screen = pygame.display.set_mode((1920, 1080), pygame.RESIZABLE)
-        else: self.screen = pygame.display.set_mode((1920, 1080), pygame.FULLSCREEN)
         self.volume = float(savedSettings[1])
-        pygame.mixer.music.set_volume(self.volume)
-        pygame.display.set_icon(get_image('Assets/Images/bbm.png')) # sets window icon
-        pygame.display.set_caption('Broken Bones') # sets window title
-        self.bg = get_image('Assets/Images/bbBG.png')
-        self.bgnh = get_image('Assets/Images/bbBGnoHUD.png')
+        self.bg = utils.get_image('Assets/Images/bbBG.png')
+        self.bgnh = utils.get_image('Assets/Images/bbBGnoHUD.png')
         self.blit_bg = self.bg
+
         # Fetch achievements
         self.achievements = []
         with open('Assets/Misc/achievements.txt','r') as f:
             for entry in f.readlines():
                 self.achievements.append(int(entry))
         self.highscore, self.entries = getScores()
-        self.clock = pygame.time.Clock()
 
+        # Initialize pygame
+        pygame.mixer.pre_init(44100, -16, 1, 512) # reduces audio latency
+        pygame.init()
+        if self.windowMode == 'RESIZABLE\n':
+            self.screen = pygame.display.set_mode((1920, 1080), pygame.RESIZABLE)
+        else: 
+            self.screen = pygame.display.set_mode((1920, 1080), pygame.FULLSCREEN)
+        self.clock = pygame.time.Clock()
+        pygame.display.set_icon(utils.get_image('Assets/Images/bbm.png')) # sets window icon
+        pygame.display.set_caption('Broken Bones') # sets window title
+        pygame.mixer.music.set_volume(self.volume)
+        pygame.mixer.music.load('Assets/Sounds/bgMusic.mp3')
+        pygame.mixer.music.play(-1) # loop music
 
     def mainMenu(self):
-        try: play_sound('Assets/Sounds/score_add.wav', True)
+        try: utils.play_sound('Assets/Sounds/score_add.wav', True)
         except: pass
         self.framecount = 0
         # mouse
@@ -76,7 +71,7 @@ class Game:
         pygame.event.set_grab(False)
         # object initialization
         self.scoreDisplay = Score()
-        self.player = Player()
+        self.player = sprites.Player(self)
         self.windlines = []
         for x in range(10):
             self.windlines.append(Wind())
@@ -114,8 +109,8 @@ class Game:
             self.player.draw()
             # HUD
             pygame.draw.rect(self.screen, black, (0,0,1920,265))
-            drawText('BROKEN BONEZ', 220, 1920//2, 130, (255,255,0), 'Assets/Misc/ipaexg.ttf')
-            drawText('PRESS SPACE TO START', 100, 1920//2, 1080//2-120, black)
+            utils.drawText(self.screen, 'BROKEN BONEZ', 220, 1920//2, 130, (255,255,0), 'Assets/Misc/ipaexg.ttf')
+            utils.drawText(self.screen, 'PRESS SPACE TO START', 100, 1920//2, 1080//2-120, black)
             for button in buttons:
                 button.draw()
         
@@ -132,8 +127,8 @@ class Game:
         pygame.mouse.set_visible(False)
         pygame.event.set_grab(True)
         # object initialization
-        self.player = Player()
-        self.obstacle = Obstacle()
+        self.player = sprites.Player(self)
+        self.obstacle = sprites.Obstacle(self)
         self.windlines = []
         for x in range(10):
             self.windlines.append(Wind())
@@ -227,7 +222,7 @@ class Game:
                         self.animations.remove(crash)
                     
             # time
-            if self.framecount % 60 == 0:
+            if not self.framecount % 60:
                 timeLeft -= 1
                 if timeLeft == 0:
                     self.gameOver(score)
@@ -243,20 +238,20 @@ class Game:
             self.player.draw()
             # HUD
             if not self.player.isJumping or crash != False:
-                drawText('PLAYER 1', 50, 350, 50)
-                drawText(str(score), 50, 350, 125)
-                drawText('HI-SCORE', 50, 950, 50)
-                drawText(str(highscores[0]), 50, 950, 125)
-                drawText(str(timeLeft), 50, 1870, 220, black)
+                utils.drawText(self.screen, 'PLAYER 1', 50, 350, 50)
+                utils.drawText(self.screen, str(score), 50, 350, 125)
+                utils.drawText(self.screen, 'HI-SCORE', 50, 950, 50)
+                utils.drawText(self.screen, str(highscores[0]), 50, 950, 125)
+                utils.drawText(self.screen, str(timeLeft), 50, 1870, 220, black)
                 for x in range(multiplier):
-                    self.screen.blit(get_image('Assets/Images/bones.png'), ((135*x)+1200, 30))
+                    self.screen.blit(utils.get_image('Assets/Images/bones.png'), ((135*x)+1200, 30))
                 for x in range(lives):
-                    self.screen.blit(get_image('Assets/Images/helmet.png'), ((100*x)+20, 1000))
+                    self.screen.blit(utils.get_image('Assets/Images/helmet.png'), ((100*x)+20, 1000))
             else:
                 # key to press
                 if len(self.animations) == 0 and trick_key != '':
-                    self.screen.blit(get_image('Assets/Images/blank_key.png'), (self.player.x-25,220))
-                    drawText(trick_key, 25, self.player.x-25+24, 220+20, black)
+                    self.screen.blit(utils.get_image('Assets/Images/blank_key.png'), (self.player.x-25,220))
+                    utils.drawText(self.screen, trick_key, 25, self.player.x-25+24, 220+20, black)
                 # theater mode borders
                 pygame.draw.rect(self.screen, black, (0,0,1920,140))
                 pygame.draw.rect(self.screen, black, (0,1080-500,1920,500))
@@ -264,8 +259,8 @@ class Game:
             self.scoreDisplay.animate(trickScore)
             trickScore = None
             if 0 < self.player.trickcount < req:
-                self.screen.blit(get_image('Assets/Images/countBubble.png'), (self.player.x-195, self.player.y-140))
-                drawText(str(self.player.trickcount), 75, self.player.x-100, self.player.y-50, black)
+                self.screen.blit(utils.get_image('Assets/Images/countBubble.png'), (self.player.x-195, self.player.y-140))
+                utils.drawText(self.screen, str(self.player.trickcount), 75, self.player.x-100, self.player.y-50, black)
 
             pygame.display.flip()
             self.clock.tick(60)
@@ -284,7 +279,7 @@ class Game:
         # initials
         self.blanks = ['_', '_', '_']
         # object initialization
-        self.player = Player()
+        self.player = sprites.Player(self)
         self.windlines = []
         for x in range(10):
             self.windlines.append(Wind())
@@ -324,10 +319,10 @@ class Game:
             # render things to the screen
             self.screen.blit(self.bg, (0,0))
             # HUD
-            drawText('PLAYER 1', 50, 350, 50)
-            drawText(str(self.score), 50, 350, 125)
-            drawText('HI-SCORE', 50, 950, 50)
-            drawText(str(highscores[0]), 50, 950, 125)
+            utils.drawText(self.screen, 'PLAYER 1', 50, 350, 50)
+            utils.drawText(self.screen, str(self.score), 50, 350, 125)
+            utils.drawText(self.screen, 'HI-SCORE', 50, 950, 50)
+            utils.drawText(self.screen, str(highscores[0]), 50, 950, 125)
             if any(i < self.score for i in highscores) or len(self.entries) < 5:
                 if len(self.entries) == 5:
                     with open('Assets/Misc/highscores.txt', 'r') as f:
@@ -337,19 +332,19 @@ class Game:
                         for line in lines:
                             f.write(line)
                     self.highscore, self.entries = getScores()
-                drawText('NEW HI-SCORE!', 150, 1920//2, 1080//2-260, black)
+                utils.drawText(self.screen, 'NEW HI-SCORE!', 150, 1920//2, 1080//2-260, black)
                 i = -125
                 for blank in self.blanks:
-                    drawText(blank, 120, 1920//2+i, 1080//2+20)
+                    utils.drawText(self.screen, blank, 120, 1920//2+i, 1080//2+20)
                     i += 125
-                drawText(str(self.score), 150, 1920//2, 1080//2-120, (255,0,0))
+                utils.drawText(self.screen, str(self.score), 150, 1920//2, 1080//2-120, (255,0,0))
             else:
-                drawText('GAMEOVER', 150, 1920//2, 1080//2-200, (255,0,0))
-                drawText(str(self.score), 150, 1920//2, 1080//2-25, 150)
-            self.screen.blit(get_image('Assets/Images/bones.png'), (1200, 30))
-            if self.score < 0: self.screen.blit(get_image('Assets/Images/ach1.png'), (1920-300,1080-75))
-            if self.score >= 1279000: self.screen.blit(get_image('Assets/Images/ach2.png'), (1920-300,1080-75))
-            if self.score >= 1300000: self.screen.blit(get_image('Assets/Images/ach3.png'), (1920-300,1080-155))
+                utils.drawText(self.screen, 'GAMEOVER', 150, 1920//2, 1080//2-200, (255,0,0))
+                utils.drawText(self.screen, str(self.score), 150, 1920//2, 1080//2-25, 150)
+            self.screen.blit(utils.get_image('Assets/Images/bones.png'), (1200, 30))
+            if self.score < 0: self.screen.blit(utils.get_image('Assets/Images/ach1.png'), (1920-300,1080-75))
+            if self.score >= 1279000: self.screen.blit(utils.get_image('Assets/Images/ach2.png'), (1920-300,1080-75))
+            if self.score >= 1300000: self.screen.blit(utils.get_image('Assets/Images/ach3.png'), (1920-300,1080-155))
             try: self.scoreDisplay.animate(None)
             except: pass
             # Environment
@@ -380,9 +375,9 @@ class Game:
                 button.update(event)
 
             self.screen.fill(black)
-            drawText('HI-SCORES', 100, 1920//2, 80)
+            utils.drawText(self.screen, 'HI-SCORES', 100, 1920//2, 80)
             for entry in self.entries:
-                drawText(entry, 60, 1920//2-360, 220+(80*self.entries.index(entry)), white, 'Assets/Misc/ipaexg.ttf', False)
+                utils.drawText(self.screen, entry, 60, 1920//2-360, 220+(80*self.entries.index(entry)), white, 'Assets/Misc/ipaexg.ttf', False)
             button.draw()
             pygame.display.flip()
             self.clock.tick(60)
@@ -411,9 +406,9 @@ class Game:
                 count += 1
                 pygame.draw.rect(self.screen, (120,120,120), (1920//2-154,-5+(100*count),310,85))
                 if entry:
-                    self.screen.blit(get_image('Assets/Images/ach'+str(count)+'.png'), (1920//2-150, 100*count))
+                    self.screen.blit(utils.get_image('Assets/Images/ach'+str(count)+'.png'), (1920//2-150, 100*count))
                 else:
-                    self.screen.blit(get_image('Assets/Images/ach'+str(count)+'locked.png'), (1920//2-150, 100*count))
+                    self.screen.blit(utils.get_image('Assets/Images/ach'+str(count)+'locked.png'), (1920//2-150, 100*count))
             button.draw()
             pygame.display.flip()
             self.clock.tick(60)
@@ -422,6 +417,7 @@ class Game:
     def settings(self, mainmenu=True):
         pygame.mouse.set_visible(True)
         pygame.event.set_grab(False)
+        cheat_code_activated = 120
         self.cheatCode = ''
         canClick = True
         if mainmenu: buttons = [Button((1920//2-(400//2)), 900, 'BACK')]
@@ -450,11 +446,12 @@ class Game:
                     
             for box in input_boxes:
                 box.update()
-            if self.cheatCode != '':
+            if self.cheatCode:
                 if self.cheatCode == 'all nighter':
-                    self.bg = get_image('Assets/Images/bbBGnight.png')
-                    self.bgnh = get_image('Assets/Images/bbBGnoHUDnight.png')
+                    self.bg = utils.get_image('Assets/Images/bbBGnight.png')
+                    self.bgnh = utils.get_image('Assets/Images/bbBGnoHUDnight.png')
                     self.blit_bg = self.bg
+                    cheat_code_activated = 0
                 self.cheatCode = ''
                 
             for option in options:
@@ -498,10 +495,13 @@ class Game:
                     option.hovered = False
 
             self.screen.fill(black)
-            drawText('VIDEO', 50, 300, 200)
-            drawText('AUDIO', 50, 300, 400)
-            drawText('EXTRA', 50, 300, 600)
-            drawText(str(int((self.volume+0.05)*10)*10), 30, 1110, 400)
+            utils.drawText(self.screen, 'VIDEO', 50, 300, 200)
+            utils.drawText(self.screen, 'AUDIO', 50, 300, 400)
+            utils.drawText(self.screen, 'EXTRA', 50, 300, 600)
+            utils.drawText(self.screen, str(int((self.volume+0.05)*10)*10), 30, 1110, 400)
+            if cheat_code_activated < 120:
+                utils.drawText(self.screen, "New extra unlocked!", 20, 1070, 598)
+                cheat_code_activated += 1
             for button in buttons:
                 button.draw()
             for box in input_boxes:
@@ -510,55 +510,6 @@ class Game:
                 option.draw()
             pygame.display.flip()
             self.clock.tick(60)
-            
-
-class Player(pygame.sprite.Sprite):
-    def __init__(self):
-        pygame.sprite.Sprite.__init__(self)
-        self.x = 200
-        self.y = 800
-        self.image = get_image('Assets/Images/bbm.png')
-        self.rect = self.image.get_rect()
-        self.onRamp = False
-        self.initJump = -9000 # avoid floating on first 30 frames
-        self.isJumping = False
-        self.trickcount = 0
-
-    def update(self):
-        # on ramp
-        try:
-            if self.rect.colliderect(game.obstacle.rect):
-                if self.onRamp == False:
-                    self.onRamp = True
-                    self.image = pygame.transform.rotate(self.image, 23)
-            elif self.onRamp: # Update this flag to false
-                self.onRamp = False
-                self.initJump = game.framecount
-        except: pass
-            
-        if self.onRamp or game.framecount - self.initJump <= 30:
-            self.y -= 10
-        # jumping
-        elif game.framecount - self.initJump < 10*60:
-            game.blit_bg = game.bgnh
-            if self.x < 1920-200-self.rect.w:
-                self.x += 2
-            self.isJumping = True
-        # landing
-        elif self.y < 800 and game.framecount - self.initJump >= (5*60)+40:
-            game.blit_bg = game.bg
-            self.isJumping = False
-            self.trickcount = 0
-            self.y += 10
-            self.x = 200
-        if self.y == 800:
-            self.image = get_image('Assets/Images/bbm.png')
-        self.rect.x = self.x
-        self.rect.y = self.y
-
-    def draw(self):
-        game.screen.blit(self.image, (self.x, self.y))
-
 
 class Animation:
     def __init__(self, initFrame, interval, animation):
@@ -579,24 +530,24 @@ class Trick(Animation):
             if self.count == len(self.animation)-1:
                 self.done = True
             else: self.count += 1
-        game.player.image = get_image(self.animation[self.count])
+        game.player.image = utils.get_image(self.animation[self.count])
 
 
 class Crash(Animation):
     def __init__(self, initFrame, interval, animation):
         super().__init__(initFrame, interval, animation)
         self.crashSound = True
-        
+
     def animate(self, framecount):
         if (framecount - self.initFrame) >= self.interval[self.count+1]:
             if self.count+1 == 0 and self.crashSound:
-                play_sound('Assets/Sounds/crash.wav')
+                utils.play_sound('Assets/Sounds/crash.wav')
                 self.crashSound = False
             if self.count != len(self.animation)-2:
                 self.count += 1
             else:
                 self.done = True
-        game.player.image = get_image(self.animation[self.count+1])
+        game.player.image = utils.get_image(self.animation[self.count+1])
         game.player.y = 900
         game.player.x -= 2
         game.obstacle.x = 10000
@@ -615,7 +566,7 @@ class Score:
         # Add new score to max if any; if caught up, start sound again
         if trickScore != None:
             if self.score == self.max:
-                play_sound('Assets/Sounds/score_add.wav', False)
+                utils.play_sound('Assets/Sounds/score_add.wav', False)
             self.max += trickScore
             self.capped = False
             self.tricks += 1
@@ -626,7 +577,7 @@ class Score:
             else: self.score += 589 # speeds up when over 100k
             # check if cap is reached
             if self.score >= self.max:
-                play_sound('Assets/Sounds/score_add.wav', True)
+                utils.play_sound('Assets/Sounds/score_add.wav', True)
                 # frame flag for reaching cap
                 if not self.capped:
                     self.score = self.max
@@ -642,26 +593,7 @@ class Score:
         if self.max != 0:
             self.r = 105+(self.tricks*50)
             if self.r > 255: self.r = 255
-            drawText(str(self.score), 75+(self.tricks*2), game.player.x+300, game.player.y-50, (self.r,255-self.r,0))
-
-
-class Obstacle(pygame.sprite.Sprite):
-    def __init__(self):
-        pygame.sprite.Sprite.__init__(self)
-        self.x = 2500
-        self.y = 735
-        self.image = get_image('Assets/Images/obstacle.png')
-        self.rect = self.image.get_rect()
-        self.rect.y = self.y
-
-    def update(self):
-        self.x -= 25
-        self.rect.x = self.x
-        if self.x < -800:
-            self.x = 10000
-
-    def draw(self):
-        game.screen.blit(self.image, (self.x, self.y))
+            utils.drawText(game.screen, str(self.score), 75+(self.tricks*2), game.player.x+300, game.player.y-50, (self.r,255-self.r,0))
 
 
 class Wind:
@@ -702,7 +634,7 @@ class Button(pygame.sprite.Sprite):
         self.x = x
         self.y = y
         self.text = text
-        self.image = get_image('Assets/Images/button0.png')
+        self.image = utils.get_image('Assets/Images/button0.png')
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
@@ -715,11 +647,11 @@ class Button(pygame.sprite.Sprite):
         pos = pygame.mouse.get_pos()
         if self.rect.collidepoint(pos[0], pos[1]):
             if self.soundFlag:
-                play_sound('Assets/Sounds/mouseover.wav')
+                utils.play_sound('Assets/Sounds/mouseover.wav')
             self.soundFlag = False
             self.showBorder = True
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                play_sound('Assets/Sounds/select.wav')
+                utils.play_sound('Assets/Sounds/select.wav')
                 if self.text == 'QUIT':
                     pygame.quit()
                     sys.exit()
@@ -743,9 +675,9 @@ class Button(pygame.sprite.Sprite):
 
     def draw(self):
         if self.showBorder:
-            game.screen.blit(get_image("Assets/Images/limeborder.png"), (self.x-3, self.y-3))
+            game.screen.blit(utils.get_image("Assets/Images/limeborder.png"), (self.x-3, self.y-3))
         game.screen.blit(self.image, self.rect)
-        drawText(self.text, self.size, self.x+200, self.y+55, black)
+        utils.drawText(game.screen, self.text, self.size, self.x+200, self.y+55, black)
 
 
 class Option:
@@ -796,7 +728,7 @@ class InputBox:
         if event.type == pygame.KEYDOWN:
             if self.active:
                 if event.key == pygame.K_RETURN:
-                    game.cheatCode = self.text
+                    game.cheatCode = self.text.lower()
                     self.text = ''
                 elif event.key == pygame.K_BACKSPACE:
                     self.text = self.text[:-1]
@@ -815,39 +747,6 @@ class InputBox:
         game.screen.blit(self.txt_surface, (self.rect.x+5, self.rect.y+5))
         # Blit the rect.
         pygame.draw.rect(game.screen, self.color, self.rect, 2)
-        
-
-_image_library = {}
-def get_image(path):
-    global _image_library
-    image = _image_library.get(path)
-    if image == None:
-        canonicalized_path = path.replace('/', os.sep).replace('\\', os.sep)
-        image = pygame.image.load(canonicalized_path)
-        _image_library[path] = image
-    return image
-
-
-_sound_library = {}
-def play_sound(path, stop=None):
-    global _sound_library
-    sound = _sound_library.get(path)
-    if sound == None:
-        canonicalized_path = path.replace('/', os.sep).replace('\\', os.sep)
-        sound = pygame.mixer.Sound(canonicalized_path)
-        _sound_library[path] = sound
-    if stop == False:
-        sound.play(10)
-    elif stop == True:
-        sound.stop()
-    else: sound.play()
-
-
-def drawText(text, size, x, y, color=white, fontstr='freesansbold.ttf', center=True):
-    font = pygame.font.Font(fontstr, size)
-    text = font.render(text, True, color)
-    if center: game.screen.blit(text, (x - (text.get_width() // 2), y - (text.get_height() // 2)))
-    else: game.screen.blit(text, (x,y))
 
 
 def getScores():
@@ -909,6 +808,7 @@ trick3animation = ['Assets/Animations/trick3/1.png',
 crashAnimation = ['Assets/Animations/crash/1.png',
                   'Assets/Animations/crash/2.png',
                   'Assets/Animations/crash/2.png']
+
 game = Game()
 COLOR_INACTIVE = pygame.Color('lightskyblue3')
 COLOR_ACTIVE = pygame.Color('dodgerblue2')

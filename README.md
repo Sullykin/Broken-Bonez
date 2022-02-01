@@ -6,7 +6,7 @@ Broken Bonez is a video game that takes the spotlight in an episode of Regular S
 1. download and unzip the rar file
 2. open Broken Bonez.exe
 
----TO BUILD EXE---     
+---TO BUILD EXE---
 1. pip install pyinstaller
 2. cd to working dir
 3. pyinstaller "Broken Bonez.pyw"
