@@ -134,10 +134,6 @@ def getScores():
     entries = [x for y, x in temp]
     entries.reverse()
     highscores.sort()
-    try:
-        highScore = highscores[-1]
-    except:
-        highScore = 0
     return highscores, entries
 
 _text_library = {}

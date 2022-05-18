@@ -1,2 +1,2 @@
 RESIZABLE
-0
+0.5

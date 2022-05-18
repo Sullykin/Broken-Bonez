@@ -50,6 +50,7 @@ class GameState:
 
 
 class SceneBase(GameState):
+    """GameState template for scenes which always have the same background"""
     def __init__(self, game):
         super().__init__(game)
         self.windlines = []
@@ -125,7 +126,7 @@ class MainMenu(SceneBase):
 
 
 class MainScene(SceneBase):
-    def __init__(self, game, lives=0, score=0, timeLeft=60):
+    def __init__(self, game, lives=2, score=0, timeLeft=60):
         super().__init__(game)
         self.score = score
         highscores, self.entries = getScores()
@@ -283,7 +284,7 @@ class MainScene(SceneBase):
             draw_text(self.game.screen, str(self.timeLeft), (1870, 220), size=50)
             for x in range(self.multiplier):
                 self.game.screen.blit(get_image('Assets/Images/bones.png'), ((135*x)+1200, 30))
-            for x in range(self.lives):
+            for x in range(self.lives+1):
                 self.game.screen.blit(get_image('Assets/Images/helmet.png'), ((100*x)+20, 1000))
         else:
             # key to press
@@ -369,7 +370,7 @@ class GameOver(SceneBase):
         draw_text(self.game.screen, 'PLAYER 1', (350, 50), size=50)
         draw_text(self.game.screen, str(self.score), (350, 125), size=50)
         draw_text(self.game.screen, 'HI-SCORE', (950, 50), size=50)
-        draw_text(self.game.screen, str(self.highscores[0]), (950, 125), size=50)
+        draw_text(self.game.screen, str(self.highscores[-1]), (950, 125), size=50)
         if any(i < self.score for i in self.highscores) or len(self.entries) < 5:
             if len(self.entries) == 5:
                 with open('Assets/Misc/highscores.txt', 'r') as f:
@@ -513,7 +514,7 @@ class Settings(GameState):
             if self.game.cheatCode:
                 if self.game.cheatCode == 'all nighter':
                     self.game.bg = get_image('Assets/Images/bg_night.png')
-                    self.blit_bg = self.game.bg
+                    self.game.blit_bg = self.game.bg
                     self.cheat_code_activated = 0
                 self.game.cheatCode = ''
 
@@ -561,11 +562,11 @@ class Settings(GameState):
     def draw(self):
         self.game.screen.fill((0,0,0))
         draw_text(self.game.screen, 'VIDEO', (300, 200), size=50, color=(255,255,255))
-        draw_text(self.game.screen, 'AUDIO', (300, 400), size=50, color=(255,255,255))
+        draw_text(self.game.screen, 'MUSIC', (300, 400), size=50, color=(255,255,255))
         draw_text(self.game.screen, 'EXTRA', (300, 600), size=50, color=(255,255,255))
         draw_text(self.game.screen, str(int((self.game.volume+0.05)*10)*10), (1110, 400), size=30, color=(255,255,255))
         if self.cheat_code_activated < 120:
-            draw_text(self.game.screen, "New extra unlocked!", (1070, 598), size=20, color=(255,255,0))
+            draw_text(self.game.screen, "New extra unlocked!", (1070, 595), size=25, color=(255,255,0))
             self.cheat_code_activated += 1
         for button in self.buttons:
             button.draw()
